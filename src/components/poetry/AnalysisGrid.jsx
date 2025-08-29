@@ -1,11 +1,21 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-export default function AnalysisGrid({ analysis, language, hasErrors, errorMessage }) {
+export default function AnalysisGrid({ analysis, hasErrors }) {
   if (!analysis || analysis.length === 0) return null;
 
   return (
-    <div className="space-y-8 mt-8">
+    <div className="space-y-6 mt-8">
+      {/* Meter section names header */}
+      <div className="text-center">
+        <div className="text-base font-semibold text-gray-800 mb-2">
+          मुज्तस मुसम्मन मख़बून महज़ूफ़ मस्कन
+        </div>
+        <div className="text-base font-semibold text-gray-600">
+          मुफ़ाइलुन फ़इलातुन मुफ़ाइलुन फ़ेलुन
+        </div>
+      </div>
+      
       {analysis.map((lineData, idx) => (
         <motion.div
           key={idx}
@@ -14,14 +24,14 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
           transition={{ delay: idx * 0.1 }}
           className="space-y-4"
         >
-          {/* Line Text - Red if error */}
+          {/* Line Text */}
           <div className="text-center">
-            <p className={`text-lg mb-4 ${lineData.hasError ? 'text-red-600 font-medium' : 'text-gray-700'}`}>
+            <p className="text-lg mb-4 text-gray-700">
               {lineData.line}
             </p>
           </div>
           
-          {/* Analysis Table - Rekhta Style */}
+          {/* Analysis Table */}
           <div className="flex justify-center">
             <table className="border-collapse border border-gray-300 bg-white">
               <tbody>
@@ -32,7 +42,7 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
                       {section.syllables.map((syllable, syllableIdx) => {
                         const isError = typeof syllable === 'object' && syllable.isError;
                         const syllableText = typeof syllable === 'object' ? syllable.text : syllable;
-                        // Use red background for errors, otherwise use section color
+                          className={`border border-gray-300 px-3 py-2 text-center font-medium ${section.color} min-w-[50px]`}
                         const cellColor = isError ? 'bg-red-200' : section.color;
                         
                         return (
@@ -41,7 +51,7 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
                             className={`border border-gray-300 px-3 py-2 text-center font-medium ${cellColor} min-w-[50px]`}
                           >
                             {syllableText}
-                          </td>
+                          {syllable}
                         );
                       })}
                     </React.Fragment>
@@ -55,18 +65,16 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
                       {section.weights.map((weight, weightIdx) => {
                         const isError = weight === 'x';
                         // Use red background for errors, otherwise use section color
-                        const cellColor = isError ? 'bg-red-200' : section.color;
+                          className={`border border-gray-300 px-3 py-2 text-center font-bold ${section.color}`}
                         
                         return (
-                          <td
-                            key={`weight-${sectionIdx}-${weightIdx}`}
-                            className={`border border-gray-300 px-3 py-2 text-center font-bold ${cellColor} ${isError ? 'text-red-600' : ''}`}
-                          >
-                            {weight}
-                          </td>
-                        );
-                      })}
-                    </React.Fragment>
+                    <td
+                      key={`pattern-${sectionIdx}`}
+                      colSpan={section.syllables.length}
+                      className={`border border-gray-300 px-3 py-2 text-center font-semibold text-sm ${section.color}`}
+                    >
+                      {section.name}
+                    </td>
                   ))}
                 </tr>
                 
@@ -95,13 +103,6 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
           </div>
         </motion.div>
       ))}
-      
-      {/* Error Message - Exactly like Rekhta */}
-      {hasErrors && errorMessage && (
-        <div className="text-center text-red-600 font-medium text-sm mt-4">
-          {errorMessage}
-        </div>
-      )}
     </div>
   );
 }
