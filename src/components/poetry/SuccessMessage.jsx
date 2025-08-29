@@ -3,7 +3,7 @@ import { CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function SuccessMessage({ language, hasErrors }) {
-  // Don't show success message if there are errors
+  // Only show success message when there are NO errors (like Rekhta)
   if (hasErrors) return null;
   
   const message = language === 'hinglish' 

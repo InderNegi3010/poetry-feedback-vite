@@ -21,7 +21,7 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
             </p>
           </div>
           
-          {/* Analysis Table */}
+          {/* Analysis Table - Rekhta Style */}
           <div className="flex justify-center">
             <table className="border-collapse border border-gray-300 bg-white">
               <tbody>
@@ -32,7 +32,8 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
                       {section.syllables.map((syllable, syllableIdx) => {
                         const isError = typeof syllable === 'object' && syllable.isError;
                         const syllableText = typeof syllable === 'object' ? syllable.text : syllable;
-                        const cellColor = isError ? 'bg-red-100' : section.color;
+                        // Use red background for errors, otherwise use section color
+                        const cellColor = isError ? 'bg-red-200' : section.color;
                         
                         return (
                           <td
@@ -53,7 +54,8 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
                     <React.Fragment key={`weights-${sectionIdx}`}>
                       {section.weights.map((weight, weightIdx) => {
                         const isError = weight === 'x';
-                        const cellColor = isError ? 'bg-red-100' : section.color;
+                        // Use red background for errors, otherwise use section color
+                        const cellColor = isError ? 'bg-red-200' : section.color;
                         
                         return (
                           <td
@@ -74,7 +76,8 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
                     const hasErrorInSection = section.syllables.some(s => 
                       (typeof s === 'object' && s.isError) || section.weights.includes('x')
                     );
-                    const cellColor = hasErrorInSection ? 'bg-red-100' : section.color;
+                    // Use red background for error sections, otherwise use section color
+                    const cellColor = hasErrorInSection ? 'bg-red-200' : section.color;
                     
                     return (
                       <td
@@ -93,7 +96,7 @@ export default function AnalysisGrid({ analysis, language, hasErrors, errorMessa
         </motion.div>
       ))}
       
-      {/* Error Message */}
+      {/* Error Message - Exactly like Rekhta */}
       {hasErrors && errorMessage && (
         <div className="text-center text-red-600 font-medium text-sm mt-4">
           {errorMessage}

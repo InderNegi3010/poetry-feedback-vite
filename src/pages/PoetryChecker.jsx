@@ -31,7 +31,7 @@ export default function PoetryChecker() {
       syllables = devanagariSyllables;
       weights = syllables.map(syl => HinglishAnalyzer.getWeight(syl));
     } else {
-      // Use Hinglish analysis
+      // Use Hinglish analysis  
       const hinglishResult = HinglishAnalyzer.analyzeHinglishLine(line);
       if (!hinglishResult) return null;
       syllables = hinglishResult.syllables;
@@ -74,23 +74,27 @@ export default function PoetryChecker() {
     // Detect dominant meter pattern from the first few lines
     const dominantPattern = MeterValidator.detectDominantMeter(results);
     
+    // Simple quality analysis like Rekhta
+    const qualityAnalysis = MeterValidator.analyzePoetryQuality(results, dominantPattern);
+    
     // Validate each line against the dominant pattern
-    let hasAnyErrors = false;
     const validatedResults = results.map(lineResult => {
       const validation = MeterValidator.validateLine(lineResult, dominantPattern);
       
       if (!validation.isValid) {
-        hasAnyErrors = true;
         return MeterValidator.markErrors(lineResult, dominantPattern);
       }
       
       return lineResult;
     });
     
-    // Set error state and message
-    setHasErrors(hasAnyErrors);
-    if (hasAnyErrors) {
-      setErrorMessage("Line is short, error near red blocks");
+    // Set states based on analysis results (simple like Rekhta)
+    setHasErrors(qualityAnalysis.hasErrors);
+    
+    // Generate error message only if there are errors
+    if (qualityAnalysis.hasErrors) {
+      const errorMsg = MeterValidator.getErrorMessage(validatedResults, language);
+      setErrorMessage(errorMsg);
     }
     
     setAnalysis(validatedResults);
@@ -149,13 +153,21 @@ export default function PoetryChecker() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <SuccessMessage language={detectedLanguage} hasErrors={hasErrors} />
+              {/* Success message only shows when NO errors (like Rekhta) */}
+              <SuccessMessage 
+                language={detectedLanguage} 
+                hasErrors={hasErrors}
+              />
+              
+              {/* Analysis grid with error highlighting */}
               <AnalysisGrid 
                 analysis={analysis} 
                 language={detectedLanguage} 
                 hasErrors={hasErrors}
                 errorMessage={errorMessage}
               />
+              
+              {/* Meter summary only when no errors */}
               <MeterSummary 
                 sections={analysis.map(a => a.sections)} 
                 language={detectedLanguage}
