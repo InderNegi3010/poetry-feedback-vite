@@ -42,7 +42,6 @@ export default function AnalysisGrid({ analysis, hasErrors }) {
                       {section.syllables.map((syllable, syllableIdx) => {
                         const isError = typeof syllable === 'object' && syllable.isError;
                         const syllableText = typeof syllable === 'object' ? syllable.text : syllable;
-                          className={`border border-gray-300 px-3 py-2 text-center font-medium ${section.color} min-w-[50px]`}
                         const cellColor = isError ? 'bg-red-200' : section.color;
                         
                         return (
@@ -51,7 +50,7 @@ export default function AnalysisGrid({ analysis, hasErrors }) {
                             className={`border border-gray-300 px-3 py-2 text-center font-medium ${cellColor} min-w-[50px]`}
                           >
                             {syllableText}
-                          {syllable}
+                          </td>
                         );
                       })}
                     </React.Fragment>
@@ -64,17 +63,18 @@ export default function AnalysisGrid({ analysis, hasErrors }) {
                     <React.Fragment key={`weights-${sectionIdx}`}>
                       {section.weights.map((weight, weightIdx) => {
                         const isError = weight === 'x';
-                        // Use red background for errors, otherwise use section color
-                          className={`border border-gray-300 px-3 py-2 text-center font-bold ${section.color}`}
+                        const cellColor = isError ? 'bg-red-200' : section.color;
                         
                         return (
-                    <td
-                      key={`pattern-${sectionIdx}`}
-                      colSpan={section.syllables.length}
-                      className={`border border-gray-300 px-3 py-2 text-center font-semibold text-sm ${section.color}`}
-                    >
-                      {section.name}
-                    </td>
+                          <td
+                            key={`weight-${sectionIdx}-${weightIdx}`}
+                            className={`border border-gray-300 px-3 py-2 text-center font-bold ${cellColor}`}
+                          >
+                            {weight}
+                          </td>
+                        );
+                      })}
+                    </React.Fragment>
                   ))}
                 </tr>
                 
@@ -84,7 +84,6 @@ export default function AnalysisGrid({ analysis, hasErrors }) {
                     const hasErrorInSection = section.syllables.some(s => 
                       (typeof s === 'object' && s.isError) || section.weights.includes('x')
                     );
-                    // Use red background for error sections, otherwise use section color
                     const cellColor = hasErrorInSection ? 'bg-red-200' : section.color;
                     
                     return (
