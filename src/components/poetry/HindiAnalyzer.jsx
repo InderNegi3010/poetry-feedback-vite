@@ -60,13 +60,17 @@ export default class HindiAnalyzer {
     return /[a-zA-Z0-9]/.test(text);
   }
 
+  // Check if a line contains invalid characters
+  static isLineInvalid(line) {
+    return this.hasEnglishOrNumbers(line);
+  }
+
   // Apply the specific meter pattern: 1 2 1 2   1 1 2 2   1 2 1 2   2 2
   static applyMeterPattern(syllables) {
-    const pattern = [1, 2, 1, 2, 1, 1, 2, 2, 1, 2, 1, 2, 2, 2];
     const sections = [];
     let currentIndex = 0;
 
-    // Section definitions with Hindi names
+    // Section definitions with Hindi names and exact pattern
     const sectionDefinitions = [
       { name: "मुफ़ाइलुन", pattern: [1, 2, 1, 2], color: "bg-blue-100" },
       { name: "फ़इलातुन", pattern: [1, 1, 2, 2], color: "bg-pink-100" },
@@ -119,6 +123,16 @@ export default class HindiAnalyzer {
   static analyzeLine(line) {
     if (!line?.trim()) return null;
     
+    // Check if line is invalid (contains English/numbers)
+    if (this.isLineInvalid(line)) {
+      return {
+        line: line.trim(),
+        isInvalid: true,
+        sections: [],
+        syllables: []
+      };
+    }
+    
     const syllables = this.extractHindiSyllables(line);
     if (!syllables || syllables.length === 0) return null;
 
@@ -126,6 +140,7 @@ export default class HindiAnalyzer {
 
     return {
       line: line.trim(),
+      isInvalid: false,
       sections,
       syllables
     };

@@ -150,13 +150,70 @@ export default class HinglishAnalyzer {
     return 'unknown';
   }
 
+  // Apply flexible meter pattern for Hinglish
+  static applyHinglishMeterPattern(syllables, weights) {
+    const sections = [];
+    let currentIndex = 0;
+
+    // Common patterns for Hinglish
+    const sectionDefinitions = [
+      { name: "mafa'ilun", pattern: [1, 2, 1, 2], color: "bg-blue-100" },
+      { name: "fai'latun", pattern: [1, 1, 2, 2], color: "bg-pink-100" },
+      { name: "mafa'ilun", pattern: [1, 2, 1, 2], color: "bg-green-100" },
+      { name: "fe'lun", pattern: [2, 2], color: "bg-yellow-100" }
+    ];
+
+    for (const sectionDef of sectionDefinitions) {
+      if (currentIndex >= syllables.length) break;
+
+      const sectionSyllables = [];
+      const sectionWeights = [];
+
+      for (let i = 0; i < sectionDef.pattern.length && currentIndex < syllables.length; i++) {
+        const expectedWeight = sectionDef.pattern[i];
+        const actualWeight = weights[currentIndex];
+        
+        sectionSyllables.push(syllables[currentIndex]);
+        
+        // Mark as error if weight doesn't match
+        if (actualWeight !== expectedWeight) {
+          sectionWeights.push("x");
+        } else {
+          sectionWeights.push(actualWeight.toString());
+        }
+        
+        currentIndex++;
+      }
+
+      if (sectionSyllables.length > 0) {
+        const hasError = sectionWeights.includes("x");
+        sections.push({
+          name: sectionDef.name,
+          syllables: sectionSyllables,
+          weights: sectionWeights,
+          color: hasError ? "bg-red-200" : sectionDef.color,
+          hasError
+        });
+      }
+    }
+
+    return sections;
+  }
+
   static analyzeHinglishLine(line) {
     if (!line?.trim()) return null;
     
     const syllables = this.extractHinglishSyllables(line);
     const weights = syllables.map(syl => this.getWeight(syl));
+    const sections = this.applyHinglishMeterPattern(syllables, weights);
+    
+    // Check if line has errors
+    const hasError = sections.some(section => section.hasError);
     
     return {
+      line: line.trim(),
+      isInvalid: hasError,
+      sections,
       syllables,
       weights,
       totalSyllables: syllables.length,
