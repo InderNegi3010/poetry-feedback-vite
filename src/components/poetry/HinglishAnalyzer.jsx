@@ -150,17 +150,146 @@ export default class HinglishAnalyzer {
     return 'unknown';
   }
 
+  // Apply simple meter pattern for Hinglish (like Hindi analyzer - no strict error checking)
+  static applyHinglishMeterPatternSimple(syllables) {
+    const sections = [];
+    let currentIndex = 0;
+
+    // Section definitions with Hinglish names and exact pattern (same as Hindi)
+    const sectionDefinitions = [
+      { name: "mafa'ilun", pattern: [1, 2, 1, 2], color: "bg-blue-100" },
+      { name: "fai'latun", pattern: [1, 1, 2, 2], color: "bg-pink-100" },
+      { name: "mafa'ilun", pattern: [1, 2, 1, 2], color: "bg-green-100" },
+      { name: "fe'lun", pattern: [2, 2], color: "bg-yellow-100" }
+    ];
+
+    for (const sectionDef of sectionDefinitions) {
+      if (currentIndex >= syllables.length) break;
+
+      const sectionSyllables = [];
+      const sectionWeights = [];
+
+      for (let i = 0; i < sectionDef.pattern.length && currentIndex < syllables.length; i++) {
+        const patternValue = sectionDef.pattern[i];
+        
+        if (patternValue === 1) {
+          // Single syllable
+          sectionSyllables.push(syllables[currentIndex]);
+          sectionWeights.push("1");
+          currentIndex++;
+        } else if (patternValue === 2) {
+          // Two syllables together
+          if (currentIndex + 1 < syllables.length) {
+            sectionSyllables.push(syllables[currentIndex] + syllables[currentIndex + 1]);
+            sectionWeights.push("2");
+            currentIndex += 2;
+          } else if (currentIndex < syllables.length) {
+            // Only one syllable left, treat as single
+            sectionSyllables.push(syllables[currentIndex]);
+            sectionWeights.push("1");
+            currentIndex++;
+          }
+        }
+      }
+
+      if (sectionSyllables.length > 0) {
+        sections.push({
+          name: sectionDef.name,
+          syllables: sectionSyllables,
+          weights: sectionWeights,
+          color: sectionDef.color
+        });
+      }
+    }
+
+    return sections;
+  }
+
+  // Keep the old method for reference but won't be used
+  static applyHinglishMeterPattern(syllables, weights) {
+    const sections = [];
+    let currentIndex = 0;
+
+    // Common patterns for Hinglish
+    const sectionDefinitions = [
+      { name: "mafa'ilun", pattern: [1, 2, 1, 2], color: "bg-blue-100" },
+      { name: "fai'latun", pattern: [1, 1, 2, 2], color: "bg-pink-100" },
+      { name: "mafa'ilun", pattern: [1, 2, 1, 2], color: "bg-green-100" },
+      { name: "fe'lun", pattern: [2, 2], color: "bg-yellow-100" }
+    ];
+
+    for (const sectionDef of sectionDefinitions) {
+      if (currentIndex >= syllables.length) break;
+
+      const sectionSyllables = [];
+      const sectionWeights = [];
+
+      for (let i = 0; i < sectionDef.pattern.length && currentIndex < syllables.length; i++) {
+        const expectedWeight = sectionDef.pattern[i];
+        const actualWeight = weights[currentIndex];
+        
+        sectionSyllables.push(syllables[currentIndex]);
+        
+        // Mark as error if weight doesn't match
+        if (actualWeight !== expectedWeight) {
+          sectionWeights.push("x");
+        } else {
+          sectionWeights.push(actualWeight.toString());
+        }
+        
+        currentIndex++;
+      }
+
+      if (sectionSyllables.length > 0) {
+        const hasError = sectionWeights.includes("x");
+        sections.push({
+          name: sectionDef.name,
+          syllables: sectionSyllables,
+          weights: sectionWeights,
+          color: hasError ? "bg-red-200" : sectionDef.color,
+          hasError
+        });
+      }
+    }
+
+    return sections;
+  }
+
+  // Check if text contains numbers (for Hinglish error validation)
+  static hasNumbers(text) {
+    return /[0-9०-९]/.test(text);
+  }
+
+  // Check if a Hinglish line is invalid (only numbers are invalid for Hinglish)
+  static isHinglishLineInvalid(line) {
+    return this.hasNumbers(line);
+  }
+
   static analyzeHinglishLine(line) {
     if (!line?.trim()) return null;
     
+    // Check if line is invalid (contains numbers only)
+    if (this.isHinglishLineInvalid(line)) {
+      return {
+        line: line.trim(),
+        isInvalid: true,
+        sections: [],
+        syllables: []
+      };
+    }
+    
     const syllables = this.extractHinglishSyllables(line);
-    const weights = syllables.map(syl => this.getWeight(syl));
+    if (!syllables || syllables.length === 0) return null;
+
+    // Apply the same pattern as Hindi analyzer (simple application without strict error checking)
+    const sections = this.applyHinglishMeterPatternSimple(syllables);
     
     return {
+      line: line.trim(),
+      isInvalid: false,
+      sections,
       syllables,
-      weights,
-      totalSyllables: syllables.length,
-      totalWeight: weights.reduce((sum, w) => sum + w, 0)
+      totalSyllables: syllables.length
     };
   }
 }

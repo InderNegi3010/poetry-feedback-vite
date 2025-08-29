@@ -1,113 +1,92 @@
 import React, { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import AnalysisGrid from "../components/poetry/AnalysisGrid";
-import SuccessMessage from "../components/poetry/SuccessMessage";
-import MeterSummary from "../components/poetry/MeterSummary";
 import Sidebar from "../components/poetry/Sidebar";
+import HindiAnalyzer from "../components/poetry/HindiAnalyzer";
 import HinglishAnalyzer from "../components/poetry/HinglishAnalyzer";
-import MeterPatterns from "../components/poetry/MeterPatterns.jsx";
-import MeterValidator from "../components/poetry/MeterValidator";
 
 export default function PoetryChecker() {
   const [poetry, setPoetry] = useState("");
   const [analysis, setAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [detectedLanguage, setDetectedLanguage] = useState(null);
-  const [hasErrors, setHasErrors] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const analyzeLine = (line, language) => {
-    if (!line.trim()) return null;
-    
-    let syllables, weights;
-
-    if (language === 'devanagari' || language === 'mixed') {
-      // Use Devanagari analysis
-      const devanagariSyllables = HinglishAnalyzer.extractDevanagariSyllables(line);
-      syllables = devanagariSyllables;
-      weights = syllables.map(syl => HinglishAnalyzer.getWeight(syl));
-    } else {
-      // Use Hinglish analysis  
-      const hinglishResult = HinglishAnalyzer.analyzeHinglishLine(line);
-      if (!hinglishResult) return null;
-      syllables = hinglishResult.syllables;
-      weights = hinglishResult.weights;
-    }
-    
-    if (!syllables || syllables.length === 0) return null;
-
-    // Create sections using the improved meter patterns with language-specific names
-    const sections = MeterPatterns.createSections(syllables, weights, language);
-
-    return {
-      line: line.trim(),
-      sections,
-      syllables,
-      weights
-    };
-  };
+  const [hasInvalidLines, setHasInvalidLines] = useState(false);
 
   const handleAnalyze = async () => {
     if (!poetry.trim()) return;
     
     setIsAnalyzing(true);
     setAnalysis(null);
+    setHasInvalidLines(false);
     setDetectedLanguage(null);
-    setHasErrors(false);
-    setErrorMessage("");
     
     // Add realistic delay for user feedback
     await new Promise(r => setTimeout(r, 600));
     
-    // Detect language from the first line
-    const firstLine = poetry.split('\n').find(l => l.trim());
-    const language = HinglishAnalyzer.detectLanguage(firstLine || poetry);
-    setDetectedLanguage(language);
-    
+    // Analyze each line individually
     const lines = poetry.split('\n').filter(l => l.trim());
-    const results = lines.map(line => analyzeLine(line, language)).filter(Boolean);
+    let results = [];
+    let hasInvalid = false;
+    let detectedMainLanguage = null;
     
-    // Detect dominant meter pattern from the first few lines
-    const dominantPattern = MeterValidator.detectDominantMeter(results);
-    
-    // Simple quality analysis like Rekhta
-    const qualityAnalysis = MeterValidator.analyzePoetryQuality(results, dominantPattern);
-    
-    // Validate each line against the dominant pattern
-    const validatedResults = results.map(lineResult => {
-      const validation = MeterValidator.validateLine(lineResult, dominantPattern);
+    // Process each line individually
+    results = lines.map(line => {
+      const lineLanguage = HinglishAnalyzer.detectLanguage(line);
       
-      if (!validation.isValid) {
-        return MeterValidator.markErrors(lineResult, dominantPattern);
+      // Set main language based on first valid line
+      if (!detectedMainLanguage && lineLanguage !== 'mixed' && lineLanguage !== 'unknown') {
+        detectedMainLanguage = lineLanguage;
       }
       
-      return lineResult;
-    });
+      let result = null;
+      
+      if (lineLanguage === 'devanagari') {
+        // Use Hindi analyzer for Devanagari lines
+        result = HindiAnalyzer.analyzeLine(line);
+      } else if (lineLanguage === 'hinglish') {
+        // Use Hinglish analyzer for Latin script lines
+        result = HinglishAnalyzer.analyzeHinglishLine(line);
+      } else {
+        // Mixed or unknown - treat as invalid
+        result = {
+          line: line.trim(),
+          isInvalid: true,
+          sections: [],
+          syllables: []
+        };
+      }
+      
+      if (result && result.isInvalid) {
+        hasInvalid = true;
+      }
+      
+      return result;
+    }).filter(Boolean);
     
-    // Set states based on analysis results (simple like Rekhta)
-    setHasErrors(qualityAnalysis.hasErrors);
+    // Set the main detected language
+    setDetectedLanguage(detectedMainLanguage);
     
-    // Generate error message only if there are errors
-    if (qualityAnalysis.hasErrors) {
-      const errorMsg = MeterValidator.getErrorMessage(validatedResults, language);
-      setErrorMessage(errorMsg);
-    }
-    
-    setAnalysis(validatedResults);
+    setHasInvalidLines(hasInvalid);
+    setAnalysis(results);
     setIsAnalyzing(false);
   };
 
   const handleClear = () => {
     setPoetry("");
     setAnalysis(null);
+    setHasInvalidLines(false);
     setDetectedLanguage(null);
-    setHasErrors(false);
-    setErrorMessage("");
   };
+
+  // Check if we should show success message (no invalid lines)
+  const showSuccessMessage = analysis && !hasInvalidLines && detectedLanguage;
+  
+  // Check if we should show footer (Hindi only, no invalid lines)
+  const showFooter = analysis && !hasInvalidLines && detectedLanguage === 'devanagari';
 
   return (
     <div className="grid lg:grid-cols-[1fr_auto] gap-8">
@@ -123,7 +102,7 @@ export default function PoetryChecker() {
             <Button
               onClick={handleAnalyze}
               disabled={isAnalyzing || !poetry.trim()}
-              className="px-8 py-2 bg-red-600 text-white font-semibold hover:bg-red-700 disabled:bg-gray-400"
+              className="px-8 py-2 bg-blue-500 text-white font-semibold hover:bg-blue-600 disabled:bg-gray-400"
             >
               {isAnalyzing ? (
                 <>
@@ -131,7 +110,7 @@ export default function PoetryChecker() {
                   Analyzing...
                 </>
               ) : (
-                "Check Bahr"
+                "CHECK BAHR"
               )}
             </Button>
             
@@ -152,27 +131,67 @@ export default function PoetryChecker() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              className="mt-8"
             >
-              {/* Success message only shows when NO errors (like Rekhta) */}
-              <SuccessMessage 
-                language={detectedLanguage} 
-                hasErrors={hasErrors}
-              />
+              {/* Error message for invalid lines */}
+              {hasInvalidLines && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-6 flex items-center">
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  <span className="font-medium">The system could not match the Behr in the highlighted lines</span>
+                </div>
+              )}
               
-              {/* Analysis grid with error highlighting */}
+              {/* Success message for valid poetry */}
+              {showSuccessMessage && (
+                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-6">
+                  <div className="flex items-center">
+                    <span className="font-semibold">Great! Your poetry is in Bahr. Keep up the good work!</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Meter section names header (only for valid Hindi) */}
+              {detectedLanguage === 'devanagari' && !hasInvalidLines && (
+                <div className="text-center mb-6">
+                  <div className="text-base font-semibold text-gray-800 mb-2">
+                    मुज्तस मुसम्मन मख़बून महज़ूफ़ मस्कन
+                  </div>
+                  <div className="text-base font-semibold text-gray-600">
+                    मुफ़ाइलुन फ़इलातुन मुफ़ाइलुन फ़ेलुन
+                  </div>
+                </div>
+              )}
+              
+              {/* Analysis grid */}
               <AnalysisGrid 
                 analysis={analysis} 
-                language={detectedLanguage} 
-                hasErrors={hasErrors}
-                errorMessage={errorMessage}
+                detectedLanguage={detectedLanguage}
+                hasInvalidLines={hasInvalidLines}
               />
               
-              {/* Meter summary only when no errors */}
-              <MeterSummary 
-                sections={analysis.map(a => a.sections)} 
-                language={detectedLanguage}
-                hasErrors={hasErrors}
-              />
+              {/* Footer (Hindi only, no errors) */}
+              {showFooter && (
+                <div className="bg-white border border-gray-300 p-6 text-center space-y-4 mt-8">
+                  <h4 className="font-bold text-gray-800 text-base">
+                    आप की रचना निम्नलिखित बहर में है:
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="text-base font-semibold">
+                      मुज्तस मुसम्मन मख़बून महज़ूफ़ मस्कन
+                    </div>
+                    <div className="text-base font-semibold">
+                      मुफ़ाइलुन फ़इलातुन मुफ़ाइलुन फ़ेलुन
+                    </div>
+                    <div className="flex justify-center space-x-4 mt-4">
+                      {["1212", "1122", "1212", "22"].map((pattern, i) => (
+                        <div key={i} className="bg-gray-100 border border-gray-300 px-4 py-2">
+                          <div className="font-mono text-sm">{pattern}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
