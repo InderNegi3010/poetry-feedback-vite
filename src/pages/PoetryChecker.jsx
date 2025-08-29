@@ -26,8 +26,6 @@ export default function PoetryChecker() {
     
     // Add realistic delay for user feedback
     await new Promise(r => setTimeout(r, 600));
-    
-<<<<<<< HEAD
     // Analyze each line individually
     const lines = poetry.split('\n').filter(l => l.trim());
     let results = [];
@@ -70,44 +68,6 @@ export default function PoetryChecker() {
     
     // Set the main detected language
     setDetectedLanguage(detectedMainLanguage);
-=======
-    // Detect language type
-    const language = HinglishAnalyzer.detectLanguage(poetry);
-    setDetectedLanguage(language);
-    
-    const lines = poetry.split('\n').filter(l => l.trim());
-    let results = [];
-    let hasInvalid = false;
-    
-    if (language === 'devanagari') {
-      // Pure Hindi analysis
-      results = lines.map(line => {
-        const result = HindiAnalyzer.analyzeLine(line);
-        if (result && result.isInvalid) {
-          hasInvalid = true;
-        }
-        return result;
-      }).filter(Boolean);
-    } else if (language === 'hinglish') {
-      // Hinglish analysis
-      results = lines.map(line => {
-        const result = HinglishAnalyzer.analyzeHinglishLine(line);
-        if (result && result.isInvalid) {
-          hasInvalid = true;
-        }
-        return result;
-      }).filter(Boolean);
-    } else {
-      // Mixed or invalid - mark all lines as invalid
-      results = lines.map(line => ({
-        line: line.trim(),
-        isInvalid: true,
-        sections: [],
-        syllables: []
-      }));
-      hasInvalid = true;
-    }
->>>>>>> ca26b286877315eab33e223884926c99c0ab9cc2
     
     setHasInvalidLines(hasInvalid);
     setAnalysis(results);

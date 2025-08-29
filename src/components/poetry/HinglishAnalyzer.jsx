@@ -150,7 +150,6 @@ export default class HinglishAnalyzer {
     return 'unknown';
   }
 
-<<<<<<< HEAD
   // Apply simple meter pattern for Hinglish (like Hindi analyzer - no strict error checking)
   static applyHinglishMeterPatternSimple(syllables) {
     const sections = [];
@@ -206,10 +205,7 @@ export default class HinglishAnalyzer {
     return sections;
   }
 
-  // Keep the old method for reference but won't be used
-=======
   // Apply flexible meter pattern for Hinglish
->>>>>>> ca26b286877315eab33e223884926c99c0ab9cc2
   static applyHinglishMeterPattern(syllables, weights) {
     const sections = [];
     let currentIndex = 0;
@@ -259,7 +255,6 @@ export default class HinglishAnalyzer {
     return sections;
   }
 
-<<<<<<< HEAD
   // Check if text contains numbers (for Hinglish error validation)
   static hasNumbers(text) {
     return /[0-9०-९]/.test(text);
@@ -270,8 +265,6 @@ export default class HinglishAnalyzer {
     return this.hasNumbers(line);
   }
 
-=======
->>>>>>> ca26b286877315eab33e223884926c99c0ab9cc2
   static analyzeHinglishLine(line) {
     if (!line?.trim()) return null;
     
@@ -286,7 +279,6 @@ export default class HinglishAnalyzer {
     }
     
     const syllables = this.extractHinglishSyllables(line);
-<<<<<<< HEAD
     if (!syllables || syllables.length === 0) return null;
 
     // Apply the same pattern as Hindi analyzer (simple application without strict error checking)
@@ -295,17 +287,6 @@ export default class HinglishAnalyzer {
     return {
       line: line.trim(),
       isInvalid: false,
-=======
-    const weights = syllables.map(syl => this.getWeight(syl));
-    const sections = this.applyHinglishMeterPattern(syllables, weights);
-    
-    // Check if line has errors
-    const hasError = sections.some(section => section.hasError);
-    
-    return {
-      line: line.trim(),
-      isInvalid: hasError,
->>>>>>> ca26b286877315eab33e223884926c99c0ab9cc2
       sections,
       syllables,
       totalSyllables: syllables.length
