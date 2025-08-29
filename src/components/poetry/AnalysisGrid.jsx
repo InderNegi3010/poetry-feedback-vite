@@ -42,6 +42,7 @@ export default function AnalysisGrid({ analysis, hasErrors }) {
                       {section.syllables.map((syllable, syllableIdx) => {
                         const isError = typeof syllable === 'object' && syllable.isError;
                         const syllableText = typeof syllable === 'object' ? syllable.text : syllable;
+                        const cellColor = isError ? 'bg-red-200' : section.color;
                         
                         return (
                           <td
